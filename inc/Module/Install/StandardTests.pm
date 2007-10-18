@@ -8,7 +8,7 @@ use File::Spec;
 use base 'Module::Install::Base';
 
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 
 sub use_standard_tests {

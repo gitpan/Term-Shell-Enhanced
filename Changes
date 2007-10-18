@@ -1,5 +1,8 @@
 Revision history for Perl extension Term::Shell::Enhanced
 
+0.02  Do Okt 18 10:09:39 CEST 2007
+        - fixed version requirement of Test::More
+
 0.01  Mi Okt  3 23:15:39 CEST 2007
-    - original version
+        - original version
 

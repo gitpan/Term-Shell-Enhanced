@@ -7,21 +7,21 @@ use Getopt::Long;
 use Cwd;
 
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
-use base qw/
+use base qw(
     Data::Inherited
     Term::Shell
-/;
+    Class::Accessor::Complex
+);
 
 
-use Class::MethodMaker
-    [ hash        => 'opt',
-      scalar => [ qw/
-          num hostname log name longname prompt_spec history_filename
-      / ],
-    ];
+Term::Shell::Enhanced
+    ->mk_hash_accessors(qw(opt))
+    ->mk_accessors(qw(
+        num hostname log name longname prompt_spec history_filename
+    ));
 
 
 # These aren't the constructor()'s DEFAULTS()!  Because new() comes from
