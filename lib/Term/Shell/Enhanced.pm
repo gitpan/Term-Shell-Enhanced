@@ -7,7 +7,7 @@ use Getopt::Long;
 use Cwd;
 
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 use base qw(
@@ -17,7 +17,7 @@ use base qw(
 );
 
 
-Term::Shell::Enhanced
+__PACKAGE__
     ->mk_hash_accessors(qw(opt))
     ->mk_accessors(qw(
         num hostname log name longname prompt_spec history_filename

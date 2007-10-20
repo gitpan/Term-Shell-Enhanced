@@ -22,4 +22,4 @@ requires:
   Sys::Hostname: 0
   Term::Shell: 0
   perl: 5.6.0
-version: 0.02
+version: 0.03
