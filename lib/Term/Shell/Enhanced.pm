@@ -1,38 +1,31 @@
 package Term::Shell::Enhanced;
-
+use 5.006;
 use warnings;
 use strict;
 use Sys::Hostname;
 use Getopt::Long;
 use Cwd;
-
-
-our $VERSION = '0.03';
-
-
+our $VERSION = '0.05';
 use base qw(
-    Data::Inherited
-    Term::Shell
-    Class::Accessor::Complex
+  Data::Inherited
+  Term::Shell
+  Class::Accessor::Complex
 );
-
-
+#<<<
 __PACKAGE__
     ->mk_hash_accessors(qw(opt))
     ->mk_accessors(qw(
         num hostname log name longname prompt_spec history_filename
     ));
-
+#>>>
 
 # These aren't the constructor()'s DEFAULTS()!  Because new() comes from
 # Term::Shell, we don't have the convenience of the the 'constructor'
 # MethodMaker-generated constructor. Therefore, Term::Shell::Enhanced defines
 # its own mechanism.
-
 sub DEFAULTS {
     my $self = shift;
-    (
-        num         => 0,
+    (   num         => 0,
         name        => 'mysh',
         longname    => 'My Custom Shell',
         prompt_spec => ': \n:\#; ',
@@ -40,49 +33,41 @@ sub DEFAULTS {
     );
 }
 
-
 sub get_history_filename {
-    my $self = shift;
+    my $self     = shift;
     my $filename = $self->history_filename;
     return $filename if defined $filename;
 
     # Per default, the history file name is derived from the shell name, with
-    # nonword characters suitably changed to make a sane filename.
-
+    # non-word characters suitably changed to make a sane filename.
     (my $name = $self->name) =~ s/\W/_/g;
     "$ENV{HOME}/.$name\_history";
 }
 
-
 sub init {
     my $self = shift;
     $self->SUPER::init(@_);
-
     my %args = @{ $self->{API}{args} };
-    $self->log($args{log})   unless defined $self->log;
-    $self->opt($args{opt})   unless defined $self->opt;
-
+    $self->log($args{log}) unless defined $self->log;
+    $self->opt($args{opt}) unless defined $self->opt;
     my %defaults = $self->every_hash('DEFAULTS');
-
     while (my ($key, $value) = each %defaults) {
         $self->$key($value) unless defined $self->$key;
     }
 
     # Only now can we try to read the history file, because the
     # 'history_filename' might have been defined in the DEFAULTS().
-
     if ($self->{term}->Features->{setHistory}) {
         my $filename = $self->get_history_filename;
         if (-r $filename) {
-            open(my $fh, '<', $filename) or
-                die "can't open history file $filename: $!\n";
+            open(my $fh, '<', $filename)
+              or die "can't open history file $filename: $!\n";
             chomp(my @history = <$fh>);
             $self->{term}->SetHistory(@history);
             close $fh or die "can't close history file $filename: $!\n";
         }
     }
 }
-
 
 sub print_greeting {
     my $self = shift;
@@ -95,15 +80,13 @@ Type 'help' for help, 'help <command>' for more detailed help on a command.
 EOINTRO
 }
 
-
 sub precmd {
     my $self = shift;
-    my $hnd = shift;
-    my $cmd = shift;
+    my $hnd  = shift;
+    my $cmd  = shift;
     my $args = shift;
     @$args = $self->expand(@$args);
 }
-
 
 sub expand {
     my $self = shift;
@@ -112,13 +95,11 @@ sub expand {
         # it's easier to do this here instead of in cmd() because the input
         # will already have been split into words, so we can use '^' in
         # regexes to do what we mean.
-
         s[^~][$ENV{HOME}];
         s[\$([_A-Za-z0-9]+)][$ENV{$1} || '']eg;
     }
     @_;
 }
-
 
 sub cmd {
     my $self = shift;
@@ -132,84 +113,72 @@ sub cmd {
     $self->SUPER::cmd($line);
 }
 
-
 sub PROMPT_VARS {
     my $self = shift;
-    (
-        h    => $self->hostname,
+    (   h    => $self->hostname,
         n    => $self->name,
         '#'  => $self->num,
         '\\' => '\\',
     );
 }
 
-
 # Can't use every_hash, because that caches and we might need dynamic values,
 # such as the prompt number ($self->num)
-
 sub prompt_str {
     my $self = shift;
     $self->num($self->num + 1);
-
-    my %prompt_vars = $self->every_hash('PROMPT_VARS', 1);  # no caching
+    my %prompt_vars = $self->every_hash('PROMPT_VARS', 1);    # no caching
     (my $prompt = $self->prompt_spec) =~ s/\\(.)/$prompt_vars{$1} || ''/ge;
     $prompt;
 }
-
-
 
 sub getopt {
     my ($self, $cmd, $getopt_spec, @args) = @_;
     local @ARGV = @args;
     my %opt;
-    my @getopt_spec = ref $getopt_spec eq 'ARRAY'
-        ? @$getopt_spec : $getopt_spec;
+    my @getopt_spec =
+      ref $getopt_spec eq 'ARRAY' ? @$getopt_spec : $getopt_spec;
     GetOptions(\%opt, @getopt_spec) or return $self->run_help($cmd);
     wantarray ? %opt : \%opt;
 }
 
-
 # The empty command; this sub needs to be there or the shell would exit
-
 sub run_ {
     my $self = shift;
+
     # don't let the empty command count
     $self->num($self->num - 1);
 }
-
-sub fini {}
-
+sub fini { }
 
 sub postloop {
     my $self = shift;
     print "\n";
-
     if ($self->{term}->Features->{getHistory}) {
         my $filename = $self->get_history_filename;
-        open(my $fh, '>', $filename) or
-            die "can't open history file $filename for writing: $!\n";
+        open(my $fh, '>', $filename)
+          or die "can't open history file $filename for writing: $!\n";
         print $fh "$_\n" for grep { length } $self->{term}->GetHistory;
         close $fh or die "can't close history file $filename: $!\n";
     }
 }
 
-
 # ========================================================================
 # External commands
 # ========================================================================
-
-
 sub smry_eval { "how to evaluate Perl code" }
-sub help_eval { <<'END' }
+
+sub help_eval {
+    <<'END' }
 You can evaluate snippets of Perl code just by putting them on a line
 beginning with !:
 
   psh:~> ! print "$_\n" for keys %ENV
 
 END
-
 {
     my $eval_num = "000001";
+
     sub catch_run {
         my ($o, $command, @args) = @_;
 
@@ -232,12 +201,12 @@ END
             }
             print "$@\n" if $@;
             $eval_num++;
-
         } elsif ($command =~ s/^@//) {
+
             # Real external commands.
             system($command, @args);
-
         } elsif ($command =~ s/^://) {
+
             # The noop; ignore it
         } else {
             print "unknown command\n";
@@ -245,14 +214,13 @@ END
     }
 }
 
-
 # ========================================================================
 # set
 # ========================================================================
-
-
 sub smry_set { 'set environment variables' }
-sub help_set { <<'END' }
+
+sub help_set {
+    <<'END' }
 set: set [ name[=value] ... ]
     set lets you manipulate environment variables. You can view environment
     variables using 'set'. To view specific variables, use 'set name'. To set
@@ -274,20 +242,19 @@ sub run_set {
         }
     } else {
         my ($key, $val);
-        while(($key, $val) = each %ENV) {
+        while (($key, $val) = each %ENV) {
             print "$key=$val\n";
         }
     }
 }
 
-
 # ========================================================================
 # cd
 # ========================================================================
-
-
 sub smry_cd { 'change working directory' }
-sub help_cd { <<'END' }
+
+sub help_cd {
+    <<'END' }
 cd: cd [dir]
     Change the current directory to the given directory. If no directory is
     given, the current value of $HOME is used.
@@ -304,14 +271,13 @@ sub run_cd {
     $ENV{PWD} = $dir;
 }
 
-
 # ========================================================================
 # pwd
 # ========================================================================
-
-
 sub smry_pwd { 'print working directory' }
-sub help_pwd { <<'END' }
+
+sub help_pwd {
+    <<'END' }
 pwd: cwd
     Prints the current working directory.
 
@@ -322,14 +288,13 @@ sub run_pwd {
     print getcwd;
 }
 
-
 # ========================================================================
 # alias
 # ========================================================================
-
-
 sub smry_alias { 'view or set command aliases' }
-sub help_alias { <<'END' }
+
+sub help_alias {
+    <<'END' }
 alias: [ name[=value] ... ]
     'alias' with no arguments prints the list of aliases in the form
     NAME=VALUE on standard output. An alias is defined for each NAME whose
@@ -359,19 +324,17 @@ sub run_alias {
     }
 }
 
-
 # ========================================================================
 # echo
 # ========================================================================
-
-
 sub smry_echo { 'output the args' }
-sub help_echo { <<END }
+
+sub help_echo {
+    <<END }
 echo [arg ...]
   Output the args.
 
 END
-
 
 sub run_echo {
     my ($self, @args) = @_;
@@ -380,99 +343,94 @@ sub run_echo {
     print "@exp\n" if @exp;
 }
 
-
 # ========================================================================
 # quit
 # ========================================================================
-
-
 sub smry_quit { 'exits the program' }
-sub help_quit { <<END }
+
+sub help_quit {
+    <<END }
 quit
   Exits the program.
 
 END
-
 
 sub run_quit {
     my $self = shift;
     $self->run_exit;
 }
 
-
 # ========================================================================
 # apropos
 # ========================================================================
-
-
 sub smry_apropos { 'like "help", but limited to a topic' }
-sub help_apropos { <<END }
+
+sub help_apropos {
+    <<END }
 apropos <word>
   Like the "help" command, but limits the information to commands that contain
   the given word in the command name or the summary.
 
 END
 
-
 # The implementation is taken directly from the run_help() method.
-
 sub run_apropos {
     my $self = shift;
     my $word = shift;
     $word = '' unless defined $word;
-	print "Type 'help command' for more detailed help on a command.\n";
-	my (%cmds, %docs);
-	my %done;
-	my %handlers;
-	for my $h (keys %{$self->{handlers}}) {
-	    next unless length($h);
-	    next unless grep{defined $self->{handlers}{$h}{$_}} qw(run smry help);
-	    my $dest = exists $self->{handlers}{$h}{run} ? \%cmds : \%docs;
-	    my $smry = exists $self->{handlers}{$h}{smry}
-		? $self->summary($h)
-		: "undocumented";
-	    my $help = exists $self->{handlers}{$h}{help}
-		? (exists $self->{handlers}{$h}{smry}
-		    ? ""
-		    : " - but help available")
-		: " - no help available";
-	    $dest->{"    $h"} = "$smry$help";
-	}
-
+    print "Type 'help command' for more detailed help on a command.\n";
+    my (%cmds, %docs);
+    my %done;
+    my %handlers;
+    for my $h (keys %{ $self->{handlers} }) {
+        next unless length($h);
+        next
+          unless grep { defined $self->{handlers}{$h}{$_} } qw(run smry help);
+        my $dest = exists $self->{handlers}{$h}{run} ? \%cmds : \%docs;
+        my $smry =
+          exists $self->{handlers}{$h}{smry}
+          ? $self->summary($h)
+          : "undocumented";
+        my $help =
+          exists $self->{handlers}{$h}{help}
+          ? (
+            exists $self->{handlers}{$h}{smry}
+            ? ""
+            : " - but help available"
+          )
+          : " - no help available";
+        $dest->{"    $h"} = "$smry$help";
+    }
     my (%apropos_cmds, %apropos_docs);
 
     # retain only matching commands and docs descriptions
-
     for my $cmd (keys %cmds) {
         next if index("$cmd$cmds{$cmd}", $word) == -1;
         $apropos_cmds{$cmd} = $cmds{$cmd};
     }
-
     for my $doc (keys %docs) {
         next if index("$doc$docs{$doc}", $word) == -1;
         $apropos_docs{$doc} = $docs{$doc};
     }
-
-	print "  Commands:\n" if %apropos_cmds;
-	$self->print_pairs(
-	    [sort keys %apropos_cmds],
-        [map {$apropos_cmds{$_}} sort keys %apropos_cmds], ' - ', 1
-	);
-	print "  Extra Help Topics: (not commands)\n" if %apropos_docs;
-	$self->print_pairs(
-	    [sort keys %apropos_docs],
-        [map {$apropos_docs{$_}} sort keys %apropos_docs], ' - ', 1
-	);
+    print "  Commands:\n" if %apropos_cmds;
+    $self->print_pairs(
+        [ sort keys %apropos_cmds ],
+        [ map { $apropos_cmds{$_} } sort keys %apropos_cmds ],
+        ' - ', 1
+    );
+    print "  Extra Help Topics: (not commands)\n" if %apropos_docs;
+    $self->print_pairs(
+        [ sort keys %apropos_docs ],
+        [ map { $apropos_docs{$_} } sort keys %apropos_docs ],
+        ' - ', 1
+    );
 }
-
-
 1;
-
 __END__
 
 =head1 NAME
 
-Term::Shell::Enhanced - more functionality for Term::Shell
+Term::Shell::Enhanced - More functionality for Term::Shell
 
 =head1 SYNOPSIS
 
@@ -491,14 +449,14 @@ The following features are added:
 
 =over 4
 
-=item history
+=item C<history>
 
 When the shell starts up, it tries to read the command history from the
 history file. Before quitting, it writes the command history to the history
 file - it does not append to it, it overwrites the file.
 
-The default history file name is the shell name - with nonword characters
-replaced by unterscores -, followed by C<_history>, as a dotfile in
+The default history file name is the shell name - with non-word characters
+replaced by underscores -, followed by C<_history>, as a dotfile in
 C<$ENV{HOME}>. For example, if you shell's name is C<mysh>, the default
 history file name will be C<~/.mysh_history>.
 
@@ -509,11 +467,11 @@ You can override the history file name in the C<DEFAULTS()>, like this:
         ...
     );
 
-=item alias replacement
+=item C<alias replacement>
 
 See the C<alias> command below.
 
-=item prompt strings
+=item C<prompt strings>
 
 When subclassing Term::Shell::Enhanced, you can define how you want your prompt to look like. Use C<DEFAULTS()> to override this.
 
@@ -546,7 +504,6 @@ Since more elaborate prompt variables will have some interaction with the shell 
         );
     }
 
-
 The prompt variables are interpolated anew for every prompt.
 
 The default prompt string is:
@@ -566,31 +523,31 @@ The following commands are added:
 
 =over 4
 
-=item eval
+=item C<eval>
 
 You can evaluate snippets of Perl code just by putting them on a line
 beginning with C<!>:
 
   psh:~> ! print "$_\n" for keys %ENV
 
-=item set [name[=value] ... ]
+=item C<set [name[=value] ... ]>
 
 C<set> lets you manipulate environment variables. You can view environment
 variables using C<set>. To view specific variables, use C<set name>. To set
 environment variables, use C<set foo=bar>.
 
-=item cd [dir]
+=item C<cd [dir]>
 
   cd foo/bar/baz
 
 Change the current directory to the given directory. If no directory is given,
 the current value of C<$HOME> is used.
 
-=item pwd
+=item C<pwd>
 
 Prints the current working directory.
 
-=item alias [ name[=value] ... ]
+=item C<alias [ name[=value] ... ]>
 
 C<alias> with no arguments prints the list of aliases in the form
 C<NAME=VALUE> on standard output. An alias is defined for each C<NAME> whose
@@ -600,32 +557,119 @@ When you enter any command, it is checked against aliases and replaced if
 there is an alias defined for it. Only the command name - that is, the first
 word of the input line - undergoes alias replacement.
 
-=item echo [arg ...]
+=item C<echo [arg ...]>
 
 Output the args.
 
-=item quit
+=item C<quit>
 
 Exits the program.
 
-=item apropos <word>
+=item C<apropos <word>>
 
 Like the C<help> command, but limits the information to commands that contain
 the given word in the command name or the summary.
 
 =back
 
-=head1 TAGS
+=head1 METHODS
 
-If you talk about this module in blogs, on del.icio.us or anywhere else,
-please use the C<termshellenhanced> tag.
+=over 4
+
+=item C<clear_opt>
+
+    $obj->clear_opt;
+
+Deletes all keys and values from the hash.
+
+=item C<delete_opt>
+
+    $obj->delete_opt(@keys);
+
+Takes a list of keys and deletes those keys from the hash.
+
+=item C<exists_opt>
+
+    if ($obj->exists_opt($key)) { ... }
+
+Takes a key and returns a true value if the key exists in the hash, and a
+false value otherwise.
+
+=item C<keys_opt>
+
+    my @keys = $obj->keys_opt;
+
+Returns a list of all hash keys in no particular order.
+
+=item C<opt>
+
+    my %hash     = $obj->opt;
+    my $hash_ref = $obj->opt;
+    my $value    = $obj->opt($key);
+    my @values   = $obj->opt([ qw(foo bar) ]);
+    $obj->opt(%other_hash);
+    $obj->opt(foo => 23, bar => 42);
+
+Get or set the hash values. If called without arguments, it returns the hash
+in list context, or a reference to the hash in scalar context. If called
+with a list of key/value pairs, it sets each key to its corresponding value,
+then returns the hash as described before.
+
+If called with exactly one key, it returns the corresponding value.
+
+If called with exactly one array reference, it returns an array whose elements
+are the values corresponding to the keys in the argument array, in the same
+order. The resulting list is returned as an array in list context, or a
+reference to the array in scalar context.
+
+If called with exactly one hash reference, it updates the hash with the given
+key/value pairs, then returns the hash in list context, or a reference to the
+hash in scalar context.
+
+=item C<opt_clear>
+
+    $obj->opt_clear;
+
+Deletes all keys and values from the hash.
+
+=item C<opt_delete>
+
+    $obj->opt_delete(@keys);
+
+Takes a list of keys and deletes those keys from the hash.
+
+=item C<opt_exists>
+
+    if ($obj->opt_exists($key)) { ... }
+
+Takes a key and returns a true value if the key exists in the hash, and a
+false value otherwise.
+
+=item C<opt_keys>
+
+    my @keys = $obj->opt_keys;
+
+Returns a list of all hash keys in no particular order.
+
+=item C<opt_values>
+
+    my @values = $obj->opt_values;
+
+Returns a list of all hash values in no particular order.
+
+=item C<values_opt>
+
+    my @values = $obj->values_opt;
+
+Returns a list of all hash values in no particular order.
+
+=back
 
 =head1 BUGS AND LIMITATIONS
 
 No bugs have been reported.
 
-Please report any bugs or feature requests to
-C<bug-term-shell-enhanced@rt.cpan.org>, or through the web interface at
+Please report any bugs or feature requests through the web interface at
 L<http://rt.cpan.org>.
 
 =head1 INSTALLATION
@@ -636,18 +680,17 @@ See perlmodinstall for information and options on installing Perl modules.
 
 The latest version of this module is available from the Comprehensive Perl
 Archive Network (CPAN). Visit <http://www.perl.com/CPAN/> to find a CPAN
-site near you. Or see <http://www.perl.com/CPAN/authors/id/M/MA/MARCEL/>.
+site near you. Or see L<http://search.cpan.org/dist/Term-Shell-Enhanced/>.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Marcel GrE<uuml>nauer, C<< <marcel@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2007 by Marcel GrE<uuml>nauer
+Copyright 2005-2009 by the authors.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut
-
