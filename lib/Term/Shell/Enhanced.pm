@@ -1,23 +1,24 @@
-package Term::Shell::Enhanced;
-use 5.006;
-use warnings;
+use 5.008;
 use strict;
+use warnings;
+
+package Term::Shell::Enhanced;
+our $VERSION = '1.100820';
+
+# ABSTRACT: More functionality for Term::Shell
 use Sys::Hostname;
 use Getopt::Long;
 use Cwd;
-our $VERSION = '0.05';
-use base qw(
+use parent qw(
   Data::Inherited
   Term::Shell
   Class::Accessor::Complex
 );
-#<<<
-__PACKAGE__
-    ->mk_hash_accessors(qw(opt))
-    ->mk_accessors(qw(
-        num hostname log name longname prompt_spec history_filename
-    ));
-#>>>
+__PACKAGE__->mk_hash_accessors(qw(opt))->mk_accessors(
+    qw(
+      num hostname log name longname prompt_spec history_filename
+      )
+);
 
 # These aren't the constructor()'s DEFAULTS()!  Because new() comes from
 # Term::Shell, we don't have the convenience of the the 'constructor'
@@ -426,11 +427,20 @@ sub run_apropos {
     );
 }
 1;
+
+
 __END__
+=pod
 
 =head1 NAME
 
 Term::Shell::Enhanced - More functionality for Term::Shell
+
+=head1 VERSION
+
+version 1.100820
+
+=for stopwords cmd fini getopt postloop precmd
 
 =head1 SYNOPSIS
 
@@ -442,6 +452,156 @@ Term::Shell::Enhanced - More functionality for Term::Shell
 =head1 DESCRIPTION
 
 This class subclasses L<Term::Shell> and adds some functionality.
+
+=head1 METHODS
+
+=head2 DEFAULTS
+
+FIXME
+
+=head2 PROMPT_VARS
+
+FIXME
+
+=head2 catch_run
+
+FIXME
+
+=head2 cmd
+
+FIXME
+
+=head2 expand
+
+FIXME
+
+=head2 fini
+
+FIXME
+
+=head2 get_history_filename
+
+FIXME
+
+=head2 getopt
+
+FIXME
+
+=head2 help_alias
+
+FIXME
+
+=head2 help_apropos
+
+FIXME
+
+=head2 help_cd
+
+FIXME
+
+=head2 help_echo
+
+FIXME
+
+=head2 help_eval
+
+FIXME
+
+=head2 help_pwd
+
+FIXME
+
+=head2 help_quit
+
+FIXME
+
+=head2 help_set
+
+FIXME
+
+=head2 init
+
+FIXME
+
+=head2 postloop
+
+FIXME
+
+=head2 precmd
+
+FIXME
+
+=head2 print_greeting
+
+FIXME
+
+=head2 prompt_str
+
+FIXME
+
+=head2 run_
+
+FIXME
+
+=head2 run_alias
+
+FIXME
+
+=head2 run_apropos
+
+FIXME
+
+=head2 run_cd
+
+FIXME
+
+=head2 run_echo
+
+FIXME
+
+=head2 run_pwd
+
+FIXME
+
+=head2 run_quit
+
+FIXME
+
+=head2 run_set
+
+FIXME
+
+=head2 smry_alias
+
+FIXME
+
+=head2 smry_apropos
+
+FIXME
+
+=head2 smry_cd
+
+FIXME
+
+=head2 smry_echo
+
+FIXME
+
+=head2 smry_eval
+
+FIXME
+
+=head2 smry_pwd
+
+FIXME
+
+=head2 smry_quit
+
+FIXME
+
+=head2 smry_set
+
+FIXME
 
 =head1 FEATURES
 
@@ -572,125 +732,39 @@ the given word in the command name or the summary.
 
 =back
 
-=head1 METHODS
+=head1 INSTALLATION
 
-=over 4
-
-=item C<clear_opt>
-
-    $obj->clear_opt;
-
-Deletes all keys and values from the hash.
-
-=item C<delete_opt>
-
-    $obj->delete_opt(@keys);
-
-Takes a list of keys and deletes those keys from the hash.
-
-=item C<exists_opt>
-
-    if ($obj->exists_opt($key)) { ... }
-
-Takes a key and returns a true value if the key exists in the hash, and a
-false value otherwise.
-
-=item C<keys_opt>
-
-    my @keys = $obj->keys_opt;
-
-Returns a list of all hash keys in no particular order.
-
-=item C<opt>
-
-    my %hash     = $obj->opt;
-    my $hash_ref = $obj->opt;
-    my $value    = $obj->opt($key);
-    my @values   = $obj->opt([ qw(foo bar) ]);
-    $obj->opt(%other_hash);
-    $obj->opt(foo => 23, bar => 42);
-
-Get or set the hash values. If called without arguments, it returns the hash
-in list context, or a reference to the hash in scalar context. If called
-with a list of key/value pairs, it sets each key to its corresponding value,
-then returns the hash as described before.
-
-If called with exactly one key, it returns the corresponding value.
-
-If called with exactly one array reference, it returns an array whose elements
-are the values corresponding to the keys in the argument array, in the same
-order. The resulting list is returned as an array in list context, or a
-reference to the array in scalar context.
-
-If called with exactly one hash reference, it updates the hash with the given
-key/value pairs, then returns the hash in list context, or a reference to the
-hash in scalar context.
-
-=item C<opt_clear>
-
-    $obj->opt_clear;
-
-Deletes all keys and values from the hash.
-
-=item C<opt_delete>
-
-    $obj->opt_delete(@keys);
-
-Takes a list of keys and deletes those keys from the hash.
-
-=item C<opt_exists>
-
-    if ($obj->opt_exists($key)) { ... }
-
-Takes a key and returns a true value if the key exists in the hash, and a
-false value otherwise.
-
-=item C<opt_keys>
-
-    my @keys = $obj->opt_keys;
-
-Returns a list of all hash keys in no particular order.
-
-=item C<opt_values>
-
-    my @values = $obj->opt_values;
-
-Returns a list of all hash values in no particular order.
-
-=item C<values_opt>
-
-    my @values = $obj->values_opt;
-
-Returns a list of all hash values in no particular order.
-
-=back
+See perlmodinstall for information and options on installing Perl modules.
 
 =head1 BUGS AND LIMITATIONS
 
 No bugs have been reported.
 
 Please report any bugs or feature requests through the web interface at
-L<http://rt.cpan.org>.
-
-=head1 INSTALLATION
-
-See perlmodinstall for information and options on installing Perl modules.
+L<http://rt.cpan.org/Public/Dist/Display.html?Name=Term-Shell-Enhanced>.
 
 =head1 AVAILABILITY
 
 The latest version of this module is available from the Comprehensive Perl
-Archive Network (CPAN). Visit <http://www.perl.com/CPAN/> to find a CPAN
-site near you. Or see L<http://search.cpan.org/dist/Term-Shell-Enhanced/>.
+Archive Network (CPAN). Visit L<http://www.perl.com/CPAN/> to find a CPAN
+site near you, or see
+L<http://search.cpan.org/dist/Term-Shell-Enhanced/>.
 
-=head1 AUTHORS
+The development version lives at
+L<http://github.com/hanekomu/Term-Shell-Enhanced/>.
+Instead of sending patches, please fork this project using the standard git
+and github infrastructure.
 
-Marcel GrE<uuml>nauer, C<< <marcel@cpan.org> >>
+=head1 AUTHOR
+
+  Marcel Gruenauer <marcel@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2005-2009 by the authors.
+This software is copyright (c) 2005 by Marcel Gruenauer.
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
+

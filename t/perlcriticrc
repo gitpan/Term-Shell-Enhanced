@@ -10,3 +10,4 @@ allow = refs
 
 # for mkdir $dir, 0777
 [-ValuesAndExpressions::ProhibitLeadingZeros]
+

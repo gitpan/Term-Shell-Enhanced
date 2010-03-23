@@ -1,9 +1,10 @@
-This is the Perl module Term::Shell::Enhanced.
+
+This is the Perl distribution Term-Shell-Enhanced.
 
 ## Installation
 
-Term::Shell::Enhanced installation is straightforward. If your CPAN shell is
-set up, you should just be able to do
+Term-Shell-Enhanced installation is straightforward.
+If your CPAN shell is set up, you should just be able to do
 
     % cpan Term::Shell::Enhanced
 
@@ -18,10 +19,9 @@ Then install it:
 
 ## Documentation
 
-Term::Shell::Enhanced documentation is available as in POD. So you can do:
+Term-Shell-Enhanced documentation is available as in POD.
+So you can do:
 
     % perldoc Term::Shell::Enhanced
 
-to read the documentation online with your favorite pager.
-
-Marcel Gruenauer
+to read the documentation with your favorite pager.
