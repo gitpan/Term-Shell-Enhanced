@@ -1,7 +1,7 @@
 #!perl
 use warnings;
 use strict;
-use Test::More 0.88;
+use Test::More 0.94;
 
 # Include a cut-down version of YAML::Tiny so we don't introduce unnecessary
 # dependencies ourselves.
@@ -397,8 +397,18 @@ BEGIN {
     # Skip modules that either don't want to be loaded directly, such as
     # Module::Install, or that mess with the test count, such as the Test::*
     # modules listed here.
+    #
+    # Moose::Role conflicts if Moose is loaded as well, but Moose::Role is in
+    # the Moose distribution and it's certain that someone who uses
+    # Moose::Role also uses Moose somewhere, so if we disallow Moose::Role,
+    # we'll still get the relevant version number.
+
     my %skip = map { $_ => 1 } qw(
+      App::FatPacker
+      Class::Accessor::Classy
+      Devel::Cover
       Module::Install
+      Moose::Role
       Test::YAML::Meta
       Test::Pod::Coverage
       Test::Portability::Files
@@ -419,7 +429,11 @@ BEGIN {
 
     diag("Testing with Perl $], $^X");
     for my $module (sort keys %requires) {
-        next if $skip{$module};
+        if ($skip{$module}) {
+            note "$module doesn't want to be loaded directly, skipping";
+            next;
+        }
+        local $SIG{__WARN__} = sub { note "$module: $_[0]" };
         use_ok $module or BAIL_OUT("can't load $module");
         my $version = $module->VERSION;
         $version = 'undefined' unless defined $version;

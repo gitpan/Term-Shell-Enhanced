@@ -2,65 +2,82 @@ NAME
     Term::Shell::Enhanced - More functionality for Term::Shell
 
 VERSION
-    version 1.100820
+    version 1.101420
 
 SYNOPSIS
-      use Term::Shell::Enhanced;
-      my $shell = Term::Shell::Enhanced->new;
-      $shell->print_greeting;
-      $shell->cmdloop;
+        package MyShell;
+        use parent qw(Term::Shell::Enhanced);
+        sub run_date { print scalar localtime, "\n" }
+        sub smry_date { 'prints the current date and time' }
+
+        sub help_date {
+            'This command prints the current date and time as returned
+             by the localtime() function.'
+        }
+
+        package main;
+        my $shell = MyShell->new;
+        $shell->print_greeting;
+        $shell->cmdloop;
 
 DESCRIPTION
     This class subclasses Term::Shell and adds some functionality.
 
 METHODS
   DEFAULTS
-    FIXME
+    This method returns a hash of default attribute mappings. Among these,
+    the shell's name is set to "mysh"; the prompt is set and the hostname is
+    set per Sys::Hostname. You can override these attributes when
+    subclassing this class or when instantiating the shell.
 
   PROMPT_VARS
-    FIXME
+    Defines variables that can be used in prompt strings. See "FEATURES" for
+    details.
 
   catch_run
-    FIXME
+    This is a fallback handler used by Term::Shell when the "run" command is
+    invoked on an unimplemented command. It checks whether the command line
+    entered starts with a "!" and if so, evaluates it as a perl command. If
+    the command line starts with a "@", it is executed as a "system()"
+    command. If the command line starts with a ":", it is ignored.
 
   cmd
-    FIXME
+    Extends Term::Shell's "cmd()" by adding aliases. See "FEATURES" for
+    details.
 
   expand
-    FIXME
-
-  fini
-    FIXME
+    When the command line has been split into words, this method is called.
+    It performs tilde and environment variable expansion.
 
   get_history_filename
-    FIXME
-
-  getopt
-    FIXME
+    Returns the name of the file in which the shell's command line history
+    is being stored. If the "history_filename" attribute is defined, that
+    value will be returned. Otherwise %s_history where %s is replaced by the
+    shell's name.
 
   help_alias
-    FIXME
+    Returns a help string for the "alias" command.
 
   help_apropos
-    FIXME
+    Returns a help string for the "apropos" command.
 
   help_cd
-    FIXME
+    Returns a help string for the "cd" command.
 
   help_echo
-    FIXME
+    Returns a help string for the "cd" command.
 
   help_eval
-    FIXME
+    Returns a help string for the "eval" command.
 
   help_pwd
-    FIXME
+    Returns a help string for the "pwd" command.
 
   help_quit
-    FIXME
+    Returns a help string for the "quit" command.
 
   help_set
-    FIXME
+    Returns a help string for the "set" command.
 
   init
     FIXME
@@ -81,49 +98,49 @@ METHODS
     FIXME
 
   run_alias
-    FIXME
+    Runs the "alias" command.
 
   run_apropos
-    FIXME
+    Runs the "apropos" command.
 
   run_cd
-    FIXME
+    Runs the "cd" command.
 
   run_echo
-    FIXME
+    Runs the "cd" command.
 
   run_pwd
-    FIXME
+    Runs the "pwd" command.
 
   run_quit
-    FIXME
+    Runs the "quit" command.
 
   run_set
-    FIXME
+    Runs the "set" command.
 
   smry_alias
-    FIXME
+    Returns a summary string for the "alias" command.
 
   smry_apropos
-    FIXME
+    Returns a summary string for the "apropos" command.
 
   smry_cd
-    FIXME
+    Returns a summary string for the "cd" command.
 
   smry_echo
-    FIXME
+    Returns a summary string for the "cd" command.
 
   smry_eval
-    FIXME
+    Returns a summary string for the "eval" command.
 
   smry_pwd
-    FIXME
+    Returns a summary string for the "pwd" command.
 
   smry_quit
-    FIXME
+    Returns a summary string for the "quit" command.
 
   smry_set
-    FIXME
+    Returns a summary string for the "set" command.
 
 FEATURES
     The following features are added:

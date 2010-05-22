@@ -3,7 +3,9 @@ use strict;
 use warnings;
 
 package Term::Shell::Enhanced;
-our $VERSION = '1.100820';
+BEGIN {
+  $Term::Shell::Enhanced::VERSION = '1.101420';
+}
 
 # ABSTRACT: More functionality for Term::Shell
 use Sys::Hostname;
@@ -82,10 +84,7 @@ EOINTRO
 }
 
 sub precmd {
-    my $self = shift;
-    my $hnd  = shift;
-    my $cmd  = shift;
-    my $args = shift;
+    my ($self, $args) = @_[0,3];
     @$args = $self->expand(@$args);
 }
 
@@ -133,16 +132,6 @@ sub prompt_str {
     $prompt;
 }
 
-sub getopt {
-    my ($self, $cmd, $getopt_spec, @args) = @_;
-    local @ARGV = @args;
-    my %opt;
-    my @getopt_spec =
-      ref $getopt_spec eq 'ARRAY' ? @$getopt_spec : $getopt_spec;
-    GetOptions(\%opt, @getopt_spec) or return $self->run_help($cmd);
-    wantarray ? %opt : \%opt;
-}
-
 # The empty command; this sub needs to be there or the shell would exit
 sub run_ {
     my $self = shift;
@@ -150,7 +139,6 @@ sub run_ {
     # don't let the empty command count
     $self->num($self->num - 1);
 }
-sub fini { }
 
 sub postloop {
     my $self = shift;
@@ -230,9 +218,9 @@ set: set [ name[=value] ... ]
 END
 
 sub run_set {
-    my ($o, @args) = @_;
-    if (@args) {
-        for my $arg (@args) {
+    shift;
+    if (@_) {
+        for my $arg (@_) {
             my ($key, $val) = split /=/, $arg;
             if (defined $val) {
                 $ENV{$key} = $val;
@@ -263,7 +251,7 @@ cd: cd [dir]
 END
 
 sub run_cd {
-    my ($o, $dir) = @_;
+    my $dir = $_[1];
     $dir = $ENV{HOME} unless defined $dir;
     chdir $dir or do {
         print "$0: $dir: $!\n";
@@ -285,7 +273,6 @@ pwd: cwd
 END
 
 sub run_pwd {
-    my $o = shift;
     print getcwd;
 }
 
@@ -317,7 +304,6 @@ sub run_alias {
             }
         }
     } else {
-        my ($key, $val);
         my %alias = %{ $o->{SHELL}{alias} || {} };
         for my $alias (sort keys %alias) {
             printf "alias %s=%s\n", $alias, $alias{$alias};
@@ -381,8 +367,6 @@ sub run_apropos {
     $word = '' unless defined $word;
     print "Type 'help command' for more detailed help on a command.\n";
     my (%cmds, %docs);
-    my %done;
-    my %handlers;
     for my $h (keys %{ $self->{handlers} }) {
         next unless length($h);
         next
@@ -432,22 +416,32 @@ sub run_apropos {
 __END__
 =pod
 
+=for stopwords cmd fini getopt postloop precmd
+
 =head1 NAME
 
 Term::Shell::Enhanced - More functionality for Term::Shell
 
 =head1 VERSION
 
-version 1.100820
-
-=for stopwords cmd fini getopt postloop precmd
+version 1.101420
 
 =head1 SYNOPSIS
 
-  use Term::Shell::Enhanced;
-  my $shell = Term::Shell::Enhanced->new;
-  $shell->print_greeting;
-  $shell->cmdloop;
+    package MyShell;
+    use parent qw(Term::Shell::Enhanced);
+    sub run_date { print scalar localtime, "\n" }
+    sub smry_date { 'prints the current date and time' }
+
+    sub help_date {
+        'This command prints the current date and time as returned
+         by the localtime() function.'
+    }
+
+    package main;
+    my $shell = MyShell->new;
+    $shell->print_greeting;
+    $shell->cmdloop;
 
 =head1 DESCRIPTION
 
@@ -457,67 +451,72 @@ This class subclasses L<Term::Shell> and adds some functionality.
 
 =head2 DEFAULTS
 
-FIXME
+This method returns a hash of default attribute mappings. Among these, the
+shell's name is set to C<mysh>; the prompt is set and the hostname is set per
+L<Sys::Hostname>. You can override these attributes when subclassing this
+class or when instantiating the shell.
 
 =head2 PROMPT_VARS
 
-FIXME
+Defines variables that can be used in prompt strings. See L</"FEATURES"> for
+details.
 
 =head2 catch_run
 
-FIXME
+This is a fallback handler used by L<Term::Shell> when the C<run> command is
+invoked on an unimplemented command. It checks whether the command line
+entered starts with a C<!> and if so, evaluates it as a perl command. If the
+command line starts with a C<@>, it is executed as a C<system()> command. If
+the command line starts with a C<:>, it is ignored.
 
 =head2 cmd
 
-FIXME
+Extends L<Term::Shell>'s C<cmd()> by adding aliases. See L</"FEATURES"> for
+details.
 
 =head2 expand
 
-FIXME
-
-=head2 fini
-
-FIXME
+When the command line has been split into words, this method is called. It
+performs tilde and environment variable expansion.
 
 =head2 get_history_filename
 
-FIXME
-
-=head2 getopt
-
-FIXME
+Returns the name of the file in which the shell's command line history is
+being stored. If the C<history_filename> attribute is defined, that value will
+be returned. Otherwise C<%s_history> where C<%s> is replaced by the shell's
+name.
 
 =head2 help_alias
 
-FIXME
+Returns a help string for the C<alias> command.
 
 =head2 help_apropos
 
-FIXME
+Returns a help string for the C<apropos> command.
 
 =head2 help_cd
 
-FIXME
+Returns a help string for the C<cd> command.
 
 =head2 help_echo
 
-FIXME
+Returns a help string for the C<cd> command.
 
 =head2 help_eval
 
-FIXME
+Returns a help string for the C<eval> command.
 
 =head2 help_pwd
 
-FIXME
+Returns a help string for the C<pwd> command.
 
 =head2 help_quit
 
-FIXME
+Returns a help string for the C<quit> command.
 
 =head2 help_set
 
-FIXME
+Returns a help string for the C<set> command.
 
 =head2 init
 
@@ -545,63 +544,63 @@ FIXME
 
 =head2 run_alias
 
-FIXME
+Runs the C<alias> command.
 
 =head2 run_apropos
 
-FIXME
+Runs the C<apropos> command.
 
 =head2 run_cd
 
-FIXME
+Runs the C<cd> command.
 
 =head2 run_echo
 
-FIXME
+Runs the C<cd> command.
 
 =head2 run_pwd
 
-FIXME
+Runs the C<pwd> command.
 
 =head2 run_quit
 
-FIXME
+Runs the C<quit> command.
 
 =head2 run_set
 
-FIXME
+Runs the C<set> command.
 
 =head2 smry_alias
 
-FIXME
+Returns a summary string for the C<alias> command.
 
 =head2 smry_apropos
 
-FIXME
+Returns a summary string for the C<apropos> command.
 
 =head2 smry_cd
 
-FIXME
+Returns a summary string for the C<cd> command.
 
 =head2 smry_echo
 
-FIXME
+Returns a summary string for the C<cd> command.
 
 =head2 smry_eval
 
-FIXME
+Returns a summary string for the C<eval> command.
 
 =head2 smry_pwd
 
-FIXME
+Returns a summary string for the C<pwd> command.
 
 =head2 smry_quit
 
-FIXME
+Returns a summary string for the C<quit> command.
 
 =head2 smry_set
 
-FIXME
+Returns a summary string for the C<set> command.
 
 =head1 FEATURES
 
@@ -633,7 +632,8 @@ See the C<alias> command below.
 
 =item C<prompt strings>
 
-When subclassing Term::Shell::Enhanced, you can define how you want your prompt to look like. Use C<DEFAULTS()> to override this.
+When subclassing Term::Shell::Enhanced, you can define how you want your
+prompt to look like. Use C<DEFAULTS()> to override this.
 
     use constant DEFAULTS => (
         prompt_spec => ...,
@@ -647,14 +647,16 @@ You can use the following prompt variables:
     '#'  the command number (increased after each command)
     \\   a literal backslash
 
-You can extend the list of available prompt variables by defining your own PROMPT_VARS() - they are cumulative over the class hierarchy.
+You can extend the list of available prompt variables by defining your own
+PROMPT_VARS() - they are cumulative over the class hierarchy.
 
     use constant PROMPT_VARS => (
         key => value,
         ...
     );
 
-Since more elaborate prompt variables will have some interaction with the shell object, you might need a more elaborate C<PROMPT_VARS()> definition:
+Since more elaborate prompt variables will have some interaction with the
+shell object, you might need a more elaborate C<PROMPT_VARS()> definition:
 
     sub PROMPT_VARS {
         my $self = shift;
